@@ -39,53 +39,51 @@ for d in dets:
 ## Установка
 ```bash
 git clone 
-cd vision_systems_test_task
+cd test-vision-systems
 docker-compose up -d
 ```
 
 ## Использование
-### Endpoint 1 - `/api/v1/face_detection`
+### Endpoint 1 - `/api/v1/face/detection`
 request:
 ```bash
 curl -X POST -F \
     "image=@/home/user/image.jpg" \
     http://localhost:5000/api/v1/face/detection
 ```
-response - HTTP status code 200 if faces found, 404 if not found:
+response - HTTP 200 OK
 ```json
-{
-    "faces": [
-        {
-            "bounding_box": [0, 0, 100, 100],
-            "landmarks": [
-                [0, 0],
-                [0, 0],
-                [0, 0],
-                [0, 0],
-                [0, 0]
-            ]
-        },
-        {
-            "bounding_box": [0, 0, 100, 100],
-            "landmarks": [
-                [0, 0],
-                [0, 0],
-                [0, 0],
-                [0, 0],
-                [0, 0]
-            ]
-        }
-    ]
-}
+[
+    {
+        "bounding_box": [0, 0, 100, 100],
+        "landmarks": [
+            [0, 0],
+            [0, 0],
+            [0, 0],
+            [0, 0],
+            [0, 0]
+        ]
+    },
+    {
+        "bounding_box": [0, 0, 100, 100],
+        "landmarks": [
+            [0, 0],
+            [0, 0],
+            [0, 0],
+            [0, 0],
+            [0, 0]
+        ]
+    }
+]
 ```
-### Endpoint 2 - `/api/v1/face_comparison`
+### Endpoint 2 - `/api/v1/face/comparison`
 request:
 ```bash
 curl -X POST -F \
     "image=@/home/user/image.jpg" \
     http://localhost:5000/api/v1/face/comparison
 ```
-response - HTTP status code 200 if faces found, 404 if not found:
+response - HTTP 200 OK
 ```json
 {
     "faces": 2,
