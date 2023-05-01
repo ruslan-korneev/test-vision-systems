@@ -9,17 +9,18 @@ def detect_faces(image):
     img = dlib.load_rgb_image(image)
     faces = detector(img, 1)
     for face in faces:
-        # face_instance = Face(
-        #     left=face.left(), top=face.top(), right=face.right(), bottom=face.bottom()
-        # )
+        face_instance = Face(
+            left=face.left(), top=face.top(), right=face.right(), bottom=face.bottom()
+        )
         predictor = dlib.shape_predictor(settings.DLIB_MODEL_PATH)
         shape = predictor(img, face)
         for index in range(shape.num_parts):
-            ...
-            # face_instance.landmarks.append(
-            #     Landmark(x=shape.part(index).x, y=shape.part(index).y, face=face_instance)
-            # )
-            # face_instance.save()
+            face_instance.landmarks.append(
+                Landmark(
+                    x=shape.part(index).x, y=shape.part(index).y, face=face_instance
+                )
+            )
+        yield face_instance
 
     return faces
 

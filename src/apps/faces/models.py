@@ -1,23 +1,25 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, LargeBinary
+from sqlalchemy import Column, DateTime, Integer, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship
 
-from src.database.config import Base
+from src.config.settings import db
 
 
-class Landmark(Base):
+class Landmark(db.Model):
     __tablename__ = "landmarks"
 
     id = Column(Integer, primary_key=True)
+    face_id = Column(Integer, ForeignKey("faces.id"), nullable=True)
     x = Column(Integer, nullable=False)
     y = Column(Integer, nullable=False)
 
 
-class Face(Base):
+class Face(db.Model):
     __tablename__ = "faces"
 
     id = Column(Integer, primary_key=True)
+    image_id = Column(Integer, ForeignKey("images.id"), nullable=True)
     top = Column(Integer, nullable=False)
     bottom = Column(Integer, nullable=False)
     left = Column(Integer, nullable=False)
@@ -25,7 +27,7 @@ class Face(Base):
     landmarks = relationship("Landmark", backref="face", lazy="dynamic")
 
 
-class Image(Base):
+class Image(db.Model):
     __tablename__ = "images"
 
     id = Column(Integer, primary_key=True)
