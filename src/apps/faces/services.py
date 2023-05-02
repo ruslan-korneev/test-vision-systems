@@ -1,36 +1,51 @@
+import io
+from PIL import Image as PILImage
 import dlib
+import numpy as np
 
-from src.apps.faces.models import Face, Landmark
+from src.apps.faces.models import Face, Landmark, Image
 from src.config import settings
+from src.database.config import Session
 
 
-def detect_faces(image):
+def detect_faces(image: Image) -> Image:
     detector = dlib.get_frontal_face_detector()
-    img = dlib.load_rgb_image(image)
-    faces = detector(img, 1)
+    pil_image = PILImage.open(io.BytesIO(image.image))
+    np_array_img = np.array(pil_image)
+    faces = detector(np_array_img, 1)
     for face in faces:
         face_instance = Face(
             left=face.left(), top=face.top(), right=face.right(), bottom=face.bottom()
         )
         predictor = dlib.shape_predictor(settings.DLIB_MODEL_PATH)
-        shape = predictor(img, face)
-        for index in range(shape.num_parts):
+        shape = predictor(np_array_img, face)
+        for part in shape.parts():
             face_instance.landmarks.append(
-                Landmark(
-                    x=shape.part(index).x, y=shape.part(index).y, face=face_instance
-                )
+                Landmark(x=part.x, y=part.y, face=face_instance)
             )
-        yield face_instance
+        image.faces.append(face_instance)
 
-    return faces
+    return image
 
 
-def compare_faces(self, other):
-    # WIP: Compare faces using euclidean distance between landmarks and face coordinates
-    # TODO: Calculate it in a database query
-    return (
-        (self.top - other.top) ** 2
-        + (self.bottom - other.bottom) ** 2
-        + (self.left - other.left) ** 2
-        + (self.right - other.right) ** 2
-    ) < 100
+def count_matching_faces(image: Image) -> int:
+    session = Session()
+    faces = image.faces.all()
+    matching_faces = []
+    for face in faces:
+        query = (
+            session.query(Face)
+            .filter(
+                Face.image_id != image.id,
+                Face.id not in [face.id for face in matching_faces],
+            )
+            .filter(
+                (Face.top - face.top) * (Face.top - face.top)
+                + (Face.bottom - face.bottom) * (Face.bottom - face.bottom)
+                + (Face.left - face.left) * (Face.left - face.left)
+                + (Face.right - face.right) * (Face.right - face.right)
+                < 100
+            )
+        )
+        matching_faces.extend(query.all())
+    return len(matching_faces)

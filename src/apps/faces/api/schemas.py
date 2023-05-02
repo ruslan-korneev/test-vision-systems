@@ -5,6 +5,7 @@ from src.config.settings import ma
 class LandmarkSchema(ma.Schema):
     class Meta:
         model = Landmark
+        fields = ("x", "y")
 
 
 class FaceSchema(ma.Schema):
@@ -12,10 +13,4 @@ class FaceSchema(ma.Schema):
 
     class Meta:
         model = Face
-
-
-class ImageSchema(ma.Schema):
-    faces = ma.Nested(FaceSchema, many=True)
-
-    class Meta:
-        model = Image
+        fields = ("left", "top", "right", "bottom", "landmarks")

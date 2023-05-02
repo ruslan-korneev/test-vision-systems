@@ -31,6 +31,7 @@ class Image(db.Model):
     __tablename__ = "images"
 
     id = Column(Integer, primary_key=True)
+    filename = Column(db.String(255), nullable=False)
     image = Column(LargeBinary, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     faces = relationship("Face", backref="image", lazy="dynamic")

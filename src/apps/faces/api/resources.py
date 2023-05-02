@@ -1,40 +1,44 @@
-from flask import request
-from flask_restful import Resource
-from pydantic import ValidationError
+from flask_restful import Resource, reqparse
+from marshmallow import ValidationError
+from werkzeug.datastructures import FileStorage
 
-from src.apps.base.api.serializers import ImageUploadSchema
-from src.apps.faces.api.serializers import FaceSchema
+from src.apps.faces.api.schemas import FaceSchema
 from src.apps.faces.api.validations import validated_image
 from src.apps.faces.models import Image
-from src.apps.faces.services import detect_faces
+from src.apps.faces.services import detect_faces, count_matching_faces
 from src.database.config import Session
 
 
 class FaceDetection(Resource):
+    parser = reqparse.RequestParser()
+    parser.add_argument("image", type=FileStorage, location="files")
+
     def post(self):
+        args = self.parser.parse_args()
+        image = args["image"]
         try:
-            image = request.files["image"]
             validated_image(image)
         except ValidationError as e:
-            return e.errors(), 400
+            return e.messages_dict, 400
 
-        faces = detect_faces(image)
-        image_instance = Image(image=image.read())
-        image_instance.faces = faces
+        image_instance = Image(filename=image.filename, image=image.read())
+        image_instance = detect_faces(image_instance)
         session = Session()
         session.add(image_instance)
         session.commit()
 
-        schema = FaceSchema(many=True)
-        return schema.dump(image_instance.faces), 200
+        data = self.get_data(image_instance)
+        return data, 200
+        # return schema.dump(image_instance.faces, many=True), 200
+
+    def get_data(self, image_instance: Image) -> dict | list[dict]:
+        schema = FaceSchema()
+        return schema.dump(image_instance.faces, many=True)
 
 
-class FaceComparison(Resource):
-    def post(self):
-        try:
-            image = request.files["image"]
-            ImageUploadSchema(image=image.read())
-        except ValidationError as e:
-            return e.errors(), 400
-
-        return {"message": "Face comparison"}, 201
+class FaceComparison(FaceDetection):
+    def get_data(self, image_instance: Image) -> dict | list[dict]:
+        return {
+            "faces": image_instance.faces.count(),
+            "matching_faces": count_matching_faces(image_instance),
+        }
