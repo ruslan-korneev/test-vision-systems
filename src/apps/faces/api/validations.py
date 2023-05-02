@@ -8,6 +8,13 @@ def validated_image(image):
         raise ValidationError({"image": "Image is required"})
 
     if image.filename.split(".")[-1] not in ALLOWED_EXTENSIONS:
-        raise ValidationError({"image": "Image extension is not allowed"})
+        raise ValidationError(
+            {
+                "image": (
+                    "Unsupported file extension. "
+                    "Supported extensions are: jpg, jpeg, png."
+                )
+            }
+        )
 
     return image
