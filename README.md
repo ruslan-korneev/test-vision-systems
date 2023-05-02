@@ -49,7 +49,7 @@ request:
 ```bash
 curl -X POST -F \
     "image=@/home/user/image.jpg" \
-    http://localhost:5000/api/v1/face/detection
+    http://0.0.0.0:5000/api/v1/face/detection
 ```
 response - HTTP 200 OK
 ```json
@@ -81,7 +81,7 @@ request:
 ```bash
 curl -X POST -F \
     "image=@/home/user/image.jpg" \
-    http://localhost:5000/api/v1/face/comparison
+    http://0.0.0.0:5000/api/v1/face/comparison
 ```
 response - HTTP 200 OK
 ```json
