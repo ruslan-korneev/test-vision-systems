@@ -26,7 +26,8 @@ ENV PYTHONUNBUFFERED=1 \
     # paths
     # this is where our requirements + virtual environment will live
     PYSETUP_PATH="/opt/pysetup" \
-    VENV_PATH="/opt/pysetup/.venv"
+    VENV_PATH="/opt/pysetup/.venv" \
+    DLIB_SHAPE_PREDICTOR="/opt/pysetup/landmarks.dat"
 
 # prepend poetry and venv to path
 ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
@@ -55,12 +56,8 @@ COPY README.md ./
 RUN poetry install --only main
 
 # install shape predictor model
-ENV DLIB_ROOT=/usr/local/.dlib
-RUN mkdir -p $DLIB_ROOT && \
-    curl -sSL http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2 |  \
-    bzip2 -d > $DLIB_ROOT/shape_predictor_68_face_landmarks.dat
-
-ENV DLIB_SHAPE_PREDICTOR=$DLIB_ROOT/shape_predictor_68_face_landmarks.dat
+RUN curl -o landmarks.dat.bz2 http://dlib.net/files/shape_predictor_5_face_landmarks.dat.bz2
+RUN bzip2 -d landmarks.dat.bz2
 
 # `development` image is used during development / testing
 FROM python-base as development
@@ -69,6 +66,7 @@ WORKDIR $PYSETUP_PATH
 # copy in our built poetry + venv
 COPY --from=builder-base $POETRY_HOME $POETRY_HOME
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
+#COPY --from=builder-base $DLIB_SHAPE_PREDICTOR $DLIB_SHAPE_PREDICTOR
 
 # quicker install as runtime deps are already installed
 RUN poetry install --no-root
@@ -77,6 +75,7 @@ FROM python-base as production
 
 WORKDIR /app
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
+#COPY --from=builder-base $DLIB_SHAPE_PREDICTOR $DLIB_SHAPE_PREDICTOR
 COPY entrypoint.sh .
 
 # Create user so we don't run docker as root
@@ -85,7 +84,7 @@ RUN groupadd -r flask && useradd -r -u 999 -g flask flask
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["gunicorn", "src.app:app", \
     "-w", "4", \
-    "-b", "0.0.0.0:8000", \
+    "-b", "0.0.0.0:5000", \
     "--error-logfile", "-", \
     "--enable-stdio-inheritance", \
     "--log-level", "debug"]
